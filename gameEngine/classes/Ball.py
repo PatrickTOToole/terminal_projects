@@ -13,3 +13,6 @@ class Ball:
         self.dot.draw()
     def set_dir(self, direction):
         self.direction = direction
+    def set_pos(self, pos):
+        self.pos = pos
+        self.dot.pos = pos
