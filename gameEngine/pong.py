@@ -15,13 +15,17 @@ from utils.Logger import Logger
 LOG_FILE = open("log", "w")
 logger = Logger(LOG_FILE)
 
+win_score = int(input("Points to win: "))
+is_cpu = not bool(int(input("How many players? | 1 or 2 | : ")) - 1)
 
-var_dir = Vector2(0, 0)
+p1_dir = Vector2(0, 0)
+p2_dir = Vector2(0, 0)
 is_exit = False
     
 
 def on_press(key):
-    global var_dir
+    global p1_dir
+    global p2_dir
     global is_exit
     if key == keyboard.Key.esc:
         logger.log("bye")
@@ -31,38 +35,56 @@ def on_press(key):
         k = key.char  # single-char keys
     except:
         k = key.name  # other keys
-    if k in [ 'up', 'down']:
-        if k == 'up':
-            var_dir = Vector2.up()
-        if k == 'down':
-            var_dir = Vector2.down()
+    if not is_cpu:
+        if k in [ 'up', 'down','w', 's']:
+            if k == 'w':
+                p1_dir = Vector2.up()
+            if k == 'up':
+                p2_dir = Vector2.up()
+            if k == 'down':
+                p2_dir = Vector2.down()
+            if k == 's':
+                p1_dir = Vector2.down()
+
+    else:
+        if k in [ 'up', 'down']:
+            if k == 'up':
+                p1 = Vector2.up()
+            if k == 'down':
+                p1_dir = Vector2.down()
         # keys of interest
         # self.keys.append(k)  # store it in global-like variable
         #
 def on_release(key):
-        global var_dir  # stop listener
+        global p1_dir
+        global p2_dir# stop listener
         try:
             k = key.char  # single-char keys
         except:
             k = key.name  # other keys
-        if k in [ 'up', 'down']:
+        if k in [ 'up', 'down','w','s']:
+            if k == 'w':
+                p1_dir = Vector2(0,0)
             if k == 'up':
-                var_dir = Vector2(0,0)
+                p2_dir = Vector2(0,0)
             if k == 'down':
-                var_dir = Vector2(0,0)
+                p2_dir = Vector2(0,0)
+            if k == 's':
+                p1_dir = Vector2(0,0)
+
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()  # start to listen on a separate thread
 
 display = Display(100, 50)
-player_score = 0
-cpu_score = 0
-ponger = Line(10, Vector2.down(), Vector2(0,0), display)
-cpu = Line(10, Vector2.down(), Vector2(99,0), display)
+p1_score = 0
+p2_score = 0
+p1 = Line(10, Vector2.down(), Vector2(0,0), display)
+p2 = Line(10, Vector2.down(), Vector2(99,0), display)
 score = Text("0 - 0", Vector2.left(), Vector2(50,0), display)
 ball = Ball(Vector2(50,25), Vector2(-1,0), display)
-display.add_obj(ponger)
+display.add_obj(p1)
 display.add_obj(ball)
-display.add_obj(cpu)
+display.add_obj(p2)
 display.add_obj(score)
 ball_dir = Vector2.left()
 try:
@@ -71,23 +93,28 @@ try:
             system('clear')
             LOG_FILE.close()
             exit(0)
-        ponger.move(var_dir)
+        if is_cpu:
+            p1.move(p1_dir)
+        else:
+            p1.move(p1_dir)
+            p2.move(p2_dir)
+        
         if ball.pos.x == 0:
-            if ball.pos.y > ponger.pos.y and ball.pos.y < ponger.pos.y + ponger.length:
+            if ball.pos.y > p1.pos.y and ball.pos.y < p1.pos.y + p1.length:
                 ball.set_dir(Vector2(1, 0))
             else:
-                cpu_score += 1
-                score.set_value(f"{player_score} - {cpu_score}")
+                p2_score += 1
+                score.set_value(f"{p1_score} - {p2_score}")
                 ball.set_pos(Vector2(50,25))
         if ball.pos.x == 99:
-            if ball.pos.y > cpu.pos.y and ball.pos.y < cpu.pos.y + cpu.length:
+            if ball.pos.y > p2.pos.y and ball.pos.y < p2.pos.y + p2.length:
                 ball.set_dir(Vector2(-1, 0))
             else:
-                player_score += 1
-                score.set_value(f"{player_score} - {cpu_score}")
+                p1_score += 1
+                score.set_value(f"{p1_score} - {p2_score}")
                 ball.set_pos(Vector2(50,25))
         ball.move()
-        if player_score >= 10 or cpu_score >= 10:
+        if p1_score >= win_score or p2_score >= win_score:
             break
         display.update()
         sleep(0.01)
@@ -95,18 +122,25 @@ try:
     banner_arr = ["_","-","‾","-"]
     banner_length = len(banner_arr)
     for i in range(10):
-        banner = banner_arr[i % banner_length]
-        banner += banner_arr[(i + 1) % banner_length]
+        system('clear')
+        banner1 = banner_arr[i % banner_length]
+        banner1 += banner_arr[(i + 1) % banner_length]
+        banner2 = banner_arr[(i + 1) % banner_length]
+        banner2 += banner_arr[i % banner_length]
 
         val = ""
         for i in range(25):
             val += "\n"
         for i in range(50):
             val += " "
-        if player_score >= 10:
-            val + banner + "Player Wins!" + banner
+        if p1 >= win_score:
+            val += banner1 + "| Player 1 Wins! |" + banner2
         else:
-            val + banner + "Player Wins!" + banner
+            if is_cpu:
+                val += banner1 + "| CPU Wins! |" + banner2
+            else:
+                val += banner1 + "| Player 2 Wins! |" + banner2
+
         for i in range(25):
             val += "\n"
         print(val)
