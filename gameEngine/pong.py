@@ -1,5 +1,5 @@
 from time import sleep
-from math import floor
+from math import floor, sin, cos, radians, ceil
 from sys import exit
 from os import system
 from pynput import keyboard
@@ -99,20 +99,44 @@ try:
             p1.move(p1_dir)
             p2.move(p2_dir)
         
-        if ball.pos.x == 0:
-            if ball.pos.y > p1.pos.y and ball.pos.y < p1.pos.y + p1.length:
-                ball.set_dir(Vector2(1, 0))
+        if ball.pos.x <= 0:
+            if ball.pos.y >= p1.pos.y and ball.pos.y <= p1.pos.y + p1.length:
+                for i in range(p1.pos.y, p1.pos.y + p1.length):
+                    if ball.pos.y == i:
+                        rot = floor(60 * (i - p1.pos.y / ceil(p1.length/2)))
+                        break
+                x = -1 * cos(radians(rot))
+                y = sin(radians(rot))
+                #1,0
+                ball.set_dir(Vector2(x, y))
             else:
                 p2_score += 1
                 score.set_value(f"{p1_score} - {p2_score}")
                 ball.set_pos(Vector2(50,25))
-        if ball.pos.x == 99:
-            if ball.pos.y > p2.pos.y and ball.pos.y < p2.pos.y + p2.length:
-                ball.set_dir(Vector2(-1, 0))
+                ball.set_dir(Vector2(1, 0))
+        if ball.pos.x >= 99:
+            if ball.pos.y >= p2.pos.y and ball.pos.y <= p2.pos.y + p2.length:
+                for i in range(p2.pos.y, p2.pos.y + p2.length):
+                    if ball.pos.y == i:
+                        rot = floor(60 * (i - p2.pos.y / ceil(p2.length/2)))
+                        break
+                x = cos(radians(rot))
+                y = sin(radians(rot))
+                #-1,0
+                ball.set_dir(Vector2(x, y))
             else:
                 p1_score += 1
                 score.set_value(f"{p1_score} - {p2_score}")
                 ball.set_pos(Vector2(50,25))
+                ball.set_dir(Vector2(1, 0))
+        if ball.pos.y >= 50:
+            x = ball.direction.x
+            y = ball.direction.y
+            ball.set_dir(Vector2(x, -1 * y))
+        if ball.pos.y <= 0:
+            x = ball.direction.x
+            y = ball.direction.y
+            ball.set_dir(Vector2(x, -1 * y))
         ball.move()
         if p1_score >= win_score or p2_score >= win_score:
             break
@@ -133,7 +157,7 @@ try:
             val += "\n"
         for i in range(50):
             val += " "
-        if p1 >= win_score:
+        if p1_score >= win_score:
             val += banner1 + "| Player 1 Wins! |" + banner2
         else:
             if is_cpu:
