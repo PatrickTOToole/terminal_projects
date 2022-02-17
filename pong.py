@@ -17,26 +17,33 @@ p1_dir = Vector2(0, 0)
 p2_dir = Vector2(0, 0)
 display = Display(100, 50)
 p1 = Line(10, Vector2.down(), Vector2(0,1), display)
+p2 = Line(10, Vector2.down(), Vector2(99,1), display)
 
 is_exit = False
 
 class Player:
-    def __init__(self, obj):
+    def __init__(self, obj, screen_bounds):
         self.obj = obj
         self.direction = Vector2(0, 0)
-    def set_direction(new_dir):
+        self.screen_bounds = screen_bounds
+    def set_direction(self, new_dir):
         self.direction = new_dir
     def update(self):
         bounds = self.obj.display.get_dims()
         pos = self.obj.get_pos()
         direction = self.direction
-        if pos.y >= 98 and direction == Vector2.up():
+        screen_bounds = self.screen_bounds
+        if pos.y >= screen_bounds.y and direction.equals(Vector2.up()):
             self.obj.move(direction)
-        elif pos.y <= 1 and direction == Vector2.down():
+        elif pos.y <= screen_bounds.x and direction.equals(Vector2.down()):
             self.obj.move(direction)
-        elif 0 <= pos.y <= 99:
+        elif screen_bounds.x <= pos.y <= screen_bounds.y:
             self.obj.move(direction)
-p1_player = Player(p1)
+p1_player = Player(p1, Vector2(1,40))
+p2_player = Player(p2, Vector2(1,40))
+
+p1_player.set_direction(Vector2(0,0))
+
 
 def on_press(key):
     global p1_dir
@@ -95,7 +102,6 @@ listener.start()  # start to listen on a separate thread
 p1_score = 0
 p2_score = 0
 
-p2 = Line(10, Vector2.down(), Vector2(99,0), display)
 score = Text("0 - 0", Vector2.left(), Vector2(50,0), display)
 ball = Ball(Vector2(50,25), Vector2(-1,0), display)
 display.add_obj(p1_player.obj)
@@ -112,24 +118,33 @@ try:
             exit(0)
         if is_cpu:
             if p1.pos.y <= screen_bounds.x and p1_dir.equals(Vector2.down()):
-                p1.move(p1_dir)
+                p1_player.set_direction(p1_dir)
             elif p1.pos.y >= screen_bounds.y and p1_dir.equals(Vector2.up()):
-                p1.move(p1_dir)
+                p1_player.set_direction(p1_dir)
             elif screen_bounds.x <= p1.pos.y <= screen_bounds.y:
-                p1.move(p1_dir)
+                p1_player.set_direction(p1_dir)
+
         else:
             if p1.pos.y >= screen_bounds.y and p1_dir.equals(Vector2.up()):
-                p1.move(p1_dir)
+                #p1.move(p1_dir)
+                p1_player.set_direction(p1_dir)
+
             elif p1.pos.y <= screen_bounds.x and p1_dir.equals(Vector2.down()):
-                p1.move(p1_dir)
+                #p1.move(p1_dir)
+                p1_player.set_direction(p1_dir)
             elif screen_bounds.x <= p1.pos.y <= screen_bounds.y:
-                p1.move(p1_dir)
+                #p1.move(p1_dir)
+                p1_player.set_direction(p1_dir)
             if p2.pos.y >= screen_bounds.y and p2_dir.equals(Vector2.up()):
-                p2.move(p2_dir)
+                #p2.move(p2_dir)
+                p2_player.set_direction(p2_dir)
+
             elif p2.pos.y <= screen_bounds.x and p2_dir.equals(Vector2.down()):
-                p2.move(p2_dir)
+                #p2.move(p2_dir)
+                p2_player.set_direction(p2_dir)
             elif screen_bounds.x <= p2.pos.y <= screen_bounds.y:
-                p2.move(p2_dir)
+                #p2.move(p2_dir)
+                p2_player.set_direction(p2_dir)
 
         if ball.pos.x <= 1:
             if ball.pos.y >= p1.pos.y and ball.pos.y < p1.pos.y + p1.length:
@@ -174,6 +189,9 @@ try:
             break
         #p1_player.update()
         display.update()
+        p1_player.update()
+        p2_player.update()
+
         sleep(0.01)
     system('clear')
     banner_arr = ["_","-","‾","-"]
