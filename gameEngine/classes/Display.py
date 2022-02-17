@@ -1,4 +1,4 @@
-from classes import Vector2
+from gameEngine.classes.Vector2 import Vector2
 from os import system
 
 

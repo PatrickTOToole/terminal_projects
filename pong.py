@@ -1,242 +1,211 @@
 from time import sleep
-from os import system
-from math import floor, sqrt
+from math import floor, sin, cos, radians, ceil
 from sys import exit
+from os import system
 from pynput import keyboard
 
-LOG_FILE = open("log", "w")
-class Logger:
-    def __init__(self, file_obj):
-        self.file_obj = file_obj
-    def log(self, text, end="\n"):
-        if type(text) != str:
-            text = str(text)
-        self.file_obj.write(text + end)
+from gameEngine.classes import *
+from gameEngine.utils import Logger
 
-class Vector2:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def __add__(self, other):
-        x = self.x + other.x
-        y = self.y + other.y
-        return Vector2(x, y)
-    @staticmethod
-    def up():
-        return Vector2(0,-1)
-    @staticmethod
-    def down():
-        return Vector2(0,1)
-    @staticmethod
-    def left():
-        return Vector2(-1, 0)
-    @staticmethod
-    def right():
-        return Vector2(1, 0)
-    def to_unit(self):
-        mag = sqrt((self.x)**2 + (self.y)**2)
-        x = self.x / mag
-        y = self.y / mag
-        return Vector2(x, y)
-    def smult(self, scalar):
-        x = self.x * scalar
-        y = self.y * scalar
-        return Vector2(x, y)
-    def sdiv(self, scalar):
-        x = self.x / scalar
-        y = self.y / scalar
-        return Vector2(x, y)
-
-
-
-class Display:
-    def __init__(self, dim_x, dim_y):
-        display = []
-        for i in range(dim_x):
-            display.append([])
-            for j in range(dim_y):
-                display[i].append(" ")
-        self.display = display
-        self.objs = []
-        self.cache = []
-    def set_point(self, x, y, val):
-        if x <= len(self.display) - 1 and x >= 0 and y >= 0 and y <= len(self.display[0]) - 1:
-            if self.cache.__contains__([x,y]):
-                self.cache.remove([x,y])
-            self.display[x][y] = val
-    def update(self):
-        self.draw()
-        system('clear')
-        for j in range(50):
-            row = ""
-            for i in range(100):
-                row = row + self.display[i][j]
-            print(row)
-        for elt in self.cache:
-            x = elt[0]
-            y = elt[1]
-            self.display[x][y] = " "
-        self.cache = []
-    def draw(self):
-        for obj in self.objs:
-            obj.draw()
-    def add_to_cache(self, x, y):
-        if not self.cache.__contains__([x,y]):
-            if x <= len(self.display) - 1 and x >= 0 and y >= 0 and y <= len(self.display[0]) - 1:
-                self.cache.append([x,y])
-    def get_dims(self):
-        return [len(self.display) - 1, len(self.display[0]) - 1]
-    def add_obj(self, obj):
-        self.objs.append(obj)
-        
-        
-class Line:
-    def __init__(self, length, vector2, center, display):
-        self.length = length
-        self.vector = vector2
-        self.center = center
-        self.display = display
-    def draw(self):
-        vect = self.vector.to_unit() 
-        for i in range(self.length):
-            point_x = floor(self.center.x + i * vect.x)
-            point_y = floor(self.center.y + i * vect.y)
-            self.display.set_point(point_x, point_y, "@")
-            self.display.add_to_cache(point_x, point_y)
-    def set_vect(self, vector2):
-        self.vector = vector2
-    def set_center(self, vector2):
-        self.center = vector2
-    def move(self, vector2):
-        new_center = self.center + vector2
-        self.set_center(new_center)
-
-            
-        
-class Box:
-    def __init__(self, len_x, len_y, center, display):
-        self.center = center
-        self.display = display
-        self.len_x = len_x
-        self.len_y = len_y
-        self.x = center[0]
-        self.y = center[1]
-        
-        top_x = center[0] - floor(len_x / 2)
-        top_y = center[1] - floor(len_y / 2)
-        
-        bot_x = center[0] + floor(len_x / 2)
-        bot_y = center[1] + floor(len_y / 2)
-        
-        self.top_left = [top_x, top_y]
-        self.bot_right = [bot_x, bot_y]
-        
-    def draw(self):
-        xlen = self.bot_right[0] - self.top_left[0]
-        ylen = self.bot_right[1] - self.top_left[1] + 1
-        xs = self.top_left[0]
-        ys = self.top_left[1]
-        
-        for x in range(xs, xs + xlen):
-            self.display.set_point(x, self.top_left[1], "#")
-            self.display.set_point(x, self.bot_right[1], "#")
-            
-            self.display.add_to_cache(x, self.top_left[1])
-            self.display.add_to_cache(x, self.bot_right[1])
-            
-        for y in range(ys, ys + ylen):
-            self.display.set_point(self.top_left[0], y, "#")
-            self.display.set_point(self.bot_right[0], y, "#")
-            
-            self.display.add_to_cache(self.top_left[0], y)
-            self.display.add_to_cache(self.bot_right[0], y)
-    def set_ylen(self, ylen):
-        self.ylen = ylen
-    def set_xlen(self, xlen):
-        self.xlen = xlen
-    def set_center(self, center):
-        len_x = self.len_x
-        len_y = self.len_y
-        self.center = center
-        
-        top_x = center[0] - floor(len_x / 2)
-        top_y = center[1] - floor(len_y / 2)
-        bot_x = center[0] + floor(len_x / 2)
-        bot_y = center[1] + floor(len_y / 2)
-        
-        self.top_left = [top_x, top_y]
-        self.bot_right = [bot_x, bot_y]
-        self.x = center[0]
-        self.y = center[1]
-    def move(self, vect):
-        x = vect.x
-        y = vect.y
-        self.set_center([self.center[0] + x, self.center[1] + y])
-            
+LOG_FILE = open("pong.log", "w")
 logger = Logger(LOG_FILE)
 
-class CircleList:
-    def __init__(self, in_list):
-        self.in_list = in_list
-        self.curr = 0
-    def nextv(self):
-        self.curr = (self.curr + 1) % len(self.in_list)
-        return self.in_list[self.curr]
-        
-try:
-    var_dir = Vector2(0, 0)
+win_score = int(input("Points to win: "))
+is_cpu = not bool(int(input("How many players? | 1 or 2 | : ")) - 1)
+
+p1_dir = Vector2(0, 0)
+p2_dir = Vector2(0, 0)
+display = Display(100, 50)
+p1 = Line(10, Vector2.down(), Vector2(0,1), display)
+
+is_exit = False
+
+class Player:
+    def __init__(self, obj):
+        self.obj = obj
+        self.direction = Vector2(0, 0)
+    def set_direction(new_dir):
+        self.direction = new_dir
+    def update(self):
+        bounds = self.obj.display.get_dims()
+        pos = self.obj.get_pos()
+        direction = self.direction
+        if pos.y >= 98 and direction == Vector2.up():
+            self.obj.move(direction)
+        elif pos.y <= 1 and direction == Vector2.down():
+            self.obj.move(direction)
+        elif 0 <= pos.y <= 99:
+            self.obj.move(direction)
+p1_player = Player(p1)
+
+def on_press(key):
+    global p1_dir
+    global p2_dir
+    global is_exit
+    if key == keyboard.Key.esc:
+        logger.log("bye")
+        is_exit = True
+        return False  # stop listener
+    try:
+        k = key.char  # single-char keys
+    except:
+        k = key.name  # other keys
+    if not is_cpu:
+        if k in [ 'up', 'down','w', 's']:
+            if k == 'w':
+                p1_dir = Vector2.up()
+            if k == 'up':
+                p2_dir = Vector2.up()
+            if k == 'down':
+                p2_dir = Vector2.down()
+            if k == 's':
+                p1_dir = Vector2.down()
 
 
-    def on_press(key):
-        global var_dir
-        if key == keyboard.Key.esc:
-            logger.log("bye")
-            return False  # stop listener
+    else:
+        if k in [ 'w', 's']:
+            if k == 'w':
+                p1_dir = Vector2.up()
+            if k == 's':
+                p1_dir = Vector2.down()
+        # keys of interest
+        # self.keys.append(k)  # store it in global-like variable
+        #
+def on_release(key):
+        global p1_dir
+        global p2_dir# stop listener
         try:
             k = key.char  # single-char keys
         except:
             k = key.name  # other keys
-        if k in ['left', 'up', 'down', 'right']:
-            if k == 'left':
-                var_dir = Vector2.left()
-            if k == 'right':
-                var_dir = Vector2.right()
+        if k in [ 'up', 'down','w','s']:
+            if k == 'w':
+                p1_dir = Vector2(0,0)
             if k == 'up':
-                var_dir = Vector2.up()
+                p2_dir = Vector2(0,0)
             if k == 'down':
-                var_dir = Vector2.down()
-            # keys of interest
-            # self.keys.append(k)  # store it in global-like variable
-            #
+                p2_dir = Vector2(0,0)
+            if k == 's':
+                p1_dir = Vector2(0,0)
 
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()  # start to listen on a separate thread
-    
-    test_display = Display(100, 50)
-    test_line = Line(100, Vector2(1,1), Vector2(20,20), test_display)
-    ponger = Line(10, Vector2.down(), Vector2(0,0), test_display)
-    test_box = Box(10, 6, [20, 20], test_display)
-    vect1 = Vector2.up()
-    vect2 = Vector2.left()
-    vect3 = Vector2.down()
-    vect4 = Vector2.right()
-    dirs = CircleList([vect1,vect2,vect3,vect4])
-    direction = vect1
-    test_display.add_obj(test_line)
-    test_display.add_obj(test_box)
-    test_display.add_obj(ponger)
-    for i in range(100):
-        #test_display.draw(test_line)
-        #test_display.draw(test_box)
-        #test_display.draw(ponger)
-        test_display.update()
-        if i % 10 == 0:
-            direction = dirs.nextv()
-        test_box.move(var_dir)
-        test_line.move(direction)
-        test_line.set_vect(direction)
-        sleep(0.1)
-except KeyboardInterrupt:
+
+listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+listener.start()  # start to listen on a separate thread
+
+p1_score = 0
+p2_score = 0
+
+p2 = Line(10, Vector2.down(), Vector2(99,0), display)
+score = Text("0 - 0", Vector2.left(), Vector2(50,0), display)
+ball = Ball(Vector2(50,25), Vector2(-1,0), display)
+display.add_obj(p1_player.obj)
+display.add_obj(ball)
+display.add_obj(p2)
+display.add_obj(score)
+ball_dir = Vector2.left()
+screen_bounds = Vector2(1,40)
+try:
+    while True:
+        if is_exit:
+            system('clear')
+            LOG_FILE.close()
+            exit(0)
+        if is_cpu:
+            if p1.pos.y <= screen_bounds.x and p1_dir.equals(Vector2.down()):
+                p1.move(p1_dir)
+            elif p1.pos.y >= screen_bounds.y and p1_dir.equals(Vector2.up()):
+                p1.move(p1_dir)
+            elif screen_bounds.x <= p1.pos.y <= screen_bounds.y:
+                p1.move(p1_dir)
+        else:
+            if p1.pos.y >= screen_bounds.y and p1_dir.equals(Vector2.up()):
+                p1.move(p1_dir)
+            elif p1.pos.y <= screen_bounds.x and p1_dir.equals(Vector2.down()):
+                p1.move(p1_dir)
+            elif screen_bounds.x <= p1.pos.y <= screen_bounds.y:
+                p1.move(p1_dir)
+            if p2.pos.y >= screen_bounds.y and p2_dir.equals(Vector2.up()):
+                p2.move(p2_dir)
+            elif p2.pos.y <= screen_bounds.x and p2_dir.equals(Vector2.down()):
+                p2.move(p2_dir)
+            elif screen_bounds.x <= p2.pos.y <= screen_bounds.y:
+                p2.move(p2_dir)
+
+        if ball.pos.x <= 1:
+            if ball.pos.y >= p1.pos.y and ball.pos.y < p1.pos.y + p1.length:
+                center = p1.pos.y + ceil(p1.length / 2)
+                rot = ball.pos.y - center
+                rot /= (p1.length / 2)
+                rot *= 60
+                x = cos(radians(rot))
+                y = sin(radians(rot))
+                #1,0
+                ball.set_dir(Vector2(x, y))
+            else:
+                p2_score += 1
+                score.set_value(f"{p1_score} - {p2_score}")
+                ball.set_pos(Vector2(50,25))
+                ball.set_dir(Vector2(1, 0))
+        if ball.pos.x >= 99:
+            if ball.pos.y >= p2.pos.y and ball.pos.y <= p2.pos.y + p2.length:
+                center = p2.pos.y + ceil(p2.length / 2)
+                rot = ball.pos.y - center
+                rot /= (p2.length / 2)
+                rot *= 60
+                x = -1 * cos(radians(rot))
+                y = sin(radians(rot))
+                #-1,0
+                ball.set_dir(Vector2(x, y))
+            else:
+                p1_score += 1
+                score.set_value(f"{p1_score} - {p2_score}")
+                ball.set_pos(Vector2(50,25))
+                ball.set_dir(Vector2(1, 0))
+        if ball.pos.y >= 50:
+            x = ball.direction.x
+            y = ball.direction.y
+            ball.set_dir(Vector2(x, -1 * y))
+        if ball.pos.y <= 0:
+            x = ball.direction.x
+            y = ball.direction.y
+            ball.set_dir(Vector2(x, -1 * y))
+        ball.move()
+        if p1_score >= win_score or p2_score >= win_score:
+            break
+        #p1_player.update()
+        display.update()
+        sleep(0.01)
+    system('clear')
+    banner_arr = ["_","-","‾","-"]
+    banner_length = len(banner_arr)
+    for i in range(10):
+        system('clear')
+        banner1 = banner_arr[i % banner_length]
+        banner1 += banner_arr[(i + 1) % banner_length]
+        banner2 = banner_arr[(i + 1) % banner_length]
+        banner2 += banner_arr[i % banner_length]
+
+        val = ""
+        for i in range(25):
+            val += "\n"
+        for i in range(50):
+            val += " "
+        if p1_score >= win_score:
+            val += banner1 + "| Player 1 Wins! |" + banner2
+        else:
+            if is_cpu:
+                val += banner1 + "| CPU Wins! |" + banner2
+            else:
+                val += banner1 + "| Player 2 Wins! |" + banner2
+
+        for i in range(25):
+            val += "\n"
+        print(val)
+        sleep(1)
+    system('clear')
     LOG_FILE.close()
     exit(0)
-LOG_FILE.close()
+except KeyboardInterrupt:
+    system('clear')
+    LOG_FILE.close()
+    exit(0)

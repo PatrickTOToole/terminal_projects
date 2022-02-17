@@ -1,4 +1,4 @@
-from classes.Dot import Dot
+from gameEngine.classes.Dot import Dot
 
 
 class Ball:

@@ -1,6 +1,8 @@
+import os
+import sys
 from math import floor
-from classes import Vector2
-from classes import Display
+from gameEngine.classes.Vector2 import Vector2
+from gameEngine.classes.Display import Display
 
 class Line:
     def __init__(self, length, direction, pos, display):
@@ -21,3 +23,5 @@ class Line:
         self.pos = pos
     def move(self, vector2):
         self.set_pos(self.pos + vector2)
+    def get_pos(self):
+        return self.pos

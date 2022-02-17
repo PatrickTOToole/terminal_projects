@@ -33,3 +33,8 @@ class Vector2:
         x = self.x / scalar
         y = self.y / scalar
         return Vector2(x, y)
+    def equals(self, other):
+        if self.x == other.x and self.y == other.y:
+            return True
+        else:
+            return False
