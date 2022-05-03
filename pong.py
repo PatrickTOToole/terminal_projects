@@ -22,24 +22,6 @@ p2 = Line(10, Vector2.down(), Vector2(99,1), display)
 
 is_exit = False
 
-#class Player:
-    #def __init__(self, obj, screen_bounds):
-        #self.obj = obj
-        #self.direction = Vector2(0, 0)
-        #self.screen_bounds = screen_bounds
-    #def set_direction(self, new_dir):
-        #self.direction = new_dir
-    #def update(self):
-        #bounds = self.obj.display.get_dims()
-        #pos = self.obj.get_pos()
-        #direction = self.direction
-        #screen_bounds = self.screen_bounds
-        #if pos.y >= screen_bounds.y and direction.equals(Vector2.up()):
-            #self.obj.move(direction)
-        #elif pos.y <= screen_bounds.x and direction.equals(Vector2.down()):
-            #self.obj.move(direction)
-        #elif screen_bounds.x <= pos.y <= screen_bounds.y:
-            #self.obj.move(direction)
 p1_player = Player(p1, Vector2(1,40))
 p2_player = Player(p2, Vector2(1,40))
 
@@ -107,7 +89,7 @@ score = Text("0 - 0", Vector2.left(), Vector2(50,0), display)
 ball = Ball(Vector2(50,25), Vector2(-1,0), display)
 display.add_obj(p1_player.obj)
 display.add_obj(ball)
-display.add_obj(p2)
+display.add_obj(p2_player.obj)
 display.add_obj(score)
 ball_dir = Vector2.left()
 screen_bounds = Vector2(1,40)
@@ -127,24 +109,16 @@ try:
 
         else:
             if p1.pos.y >= screen_bounds.y and p1_dir.equals(Vector2.up()):
-                #p1.move(p1_dir)
                 p1_player.set_direction(p1_dir)
-
             elif p1.pos.y <= screen_bounds.x and p1_dir.equals(Vector2.down()):
-                #p1.move(p1_dir)
                 p1_player.set_direction(p1_dir)
             elif screen_bounds.x <= p1.pos.y <= screen_bounds.y:
-                #p1.move(p1_dir)
                 p1_player.set_direction(p1_dir)
             if p2.pos.y >= screen_bounds.y and p2_dir.equals(Vector2.up()):
-                #p2.move(p2_dir)
                 p2_player.set_direction(p2_dir)
-
             elif p2.pos.y <= screen_bounds.x and p2_dir.equals(Vector2.down()):
-                #p2.move(p2_dir)
                 p2_player.set_direction(p2_dir)
             elif screen_bounds.x <= p2.pos.y <= screen_bounds.y:
-                #p2.move(p2_dir)
                 p2_player.set_direction(p2_dir)
 
         if ball.pos.x <= 1:
@@ -155,7 +129,6 @@ try:
                 rot *= 60
                 x = cos(radians(rot))
                 y = sin(radians(rot))
-                #1,0
                 ball.set_dir(Vector2(x, y))
             else:
                 p2_score += 1
@@ -188,12 +161,12 @@ try:
         ball.move()
         if p1_score >= win_score or p2_score >= win_score:
             break
-        #p1_player.update()
         display.update()
         p1_player.update()
         p2_player.update()
 
         sleep(0.01)
+    # End Game Animation
     system('clear')
     banner_arr = ["_","-","‾","-"]
     banner_length = len(banner_arr)
@@ -226,5 +199,6 @@ try:
     exit(0)
 except KeyboardInterrupt:
     system('clear')
+    print("Saving Log")
     LOG_FILE.close()
     exit(0)
